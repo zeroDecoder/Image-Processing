@@ -16,14 +16,15 @@ int const max_binary_value = 255;
 // vars for blur
 int MAX_KERNEL_LENGTH = 31;
 
-Mat src, src_gray, dst, dst2;
+Mat src, new_src, dst, dst2;
 const char* window_name = "Threshold Demo";
 
-static void Threshold_Demo( int, void* )
+static void Threshold_Demo( int, void*, Mat the_src, Mat the_dst )
 {
-    threshold( src_gray, dst, threshold_value, max_binary_value, threshold_type );
-    imshow( window_name, dst );
+    threshold( the_src, the_dst, threshold_value, max_binary_value, threshold_type );
+    imshow( window_name, the_dst );
 }
+
 int main( int argc, char** argv )
 {
     String imageName("/Users/fangrl4ever/Downloads/boxes.jpeg"); // by default
@@ -37,9 +38,9 @@ int main( int argc, char** argv )
         cout << "Cannot read image: " << imageName << std::endl;
         return -1;
     }
-    cvtColor( src, src_gray, COLOR_BGR2GRAY ); // Convert the image to Gray
+    cvtColor( src, new_src, COLOR_BGR2GRAY ); // Convert the image to Gray
     namedWindow( window_name, WINDOW_AUTOSIZE ); // Create a window to display results
-    Threshold_Demo( 0, 0 ); // Call the function to initialize
+    Threshold_Demo( 0, 0, new_src, dst); // Call the function to initialize
     imwrite("/Users/fangrl4ever/Downloads/step1.jpeg", dst );
     waitKey(50);
 
@@ -47,10 +48,9 @@ int main( int argc, char** argv )
     dst2 = dst.clone();
     for ( int i = 1; i < MAX_KERNEL_LENGTH; i = i + 2 )
     {
-        blur( dst, dst2, Size( i, i ), Point(-1,-1) );
+        blur( dst, dst2, Size( i, i ), Point(-1,-1) ); // Thread 1: signal SIGABRT when running
     }
     imwrite("/Users/fangrl4ever/Downloads/step2.jpeg", dst2);
     return 0;
-
 }
 
