@@ -1,60 +1,64 @@
-// Download an image and add filters to it
-
 #include "opencv2/imgproc.hpp"
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/highgui.hpp"
 #include <iostream>
-
 using namespace cv;
-using std::cout;
+using namespace std;
 
 // vars for threshold
-int THRESHOLD_VALUE = 220;
+int THRESHOLD_VALUE = 48;
 int const MAX_BINARY_VALUE = 255;
-
-// vars for blur
-int MAX_KERNEL_LENGTH = 5;
-
-const char* window_name = "Threshold Demo";
 
 static void Threshold_Demo(Mat *the_src, Mat *the_dst, int threshold_type)
 {
     threshold(*the_src, *the_dst, THRESHOLD_VALUE, MAX_BINARY_VALUE, threshold_type);
-    //imshow(window_name, *the_dst);
 }
 
 int main( int argc, char** argv )
 {
-    Mat src, new_src, dst, dst2, dst3;
-    String imageName("/Users/fangrl4ever/Downloads/boxes.jpeg"); // by default
-    if (argc > 1)
-    {
-        imageName = argv[1];
-    }
-    src = imread( imageName, IMREAD_COLOR ); // Load an image
-    if (src.empty())
-    {
-        cout << "Cannot read image: " << imageName << std::endl;
-        return -1;
-    }
-    cvtColor( src, new_src, COLOR_BGR2GRAY ); // Convert the image to Gray
-    //namedWindow( window_name, WINDOW_AUTOSIZE ); // Create a window to display results
+    Mat image, src, src_gray;
+    Mat grad, grad2, grad_dest;
+    const String window_name = "Edge Detection";
+    int ksize = 1;
+    int scale = 4;
+    int delta = 0;
+    int ddepth = CV_16S;
+    String imageName("/Users/fangrl4ever/Downloads/boxes.jpeg");
 
-    // threshold
-    Threshold_Demo(&new_src, &dst, 1); // Call the function to initialize
-    imwrite("/Users/fangrl4ever/Downloads/step1.jpeg", dst );
+    image = imread( imageName, IMREAD_COLOR ); // Load an image
 
-    // blur code
-    dst2 = dst.clone();
-    for ( int i = 1; i < MAX_KERNEL_LENGTH; i = i + 2 )
+    // check for error
+    if( image.empty() )
     {
-        blur( dst, dst2, Size( i, i ), Point(-1,-1) ); // Thread 1: signal SIGABRT when running
+        printf("Error opening image: %s\n", imageName.c_str());
+        return 1;
     }
-    imwrite("/Users/fangrl4ever/Downloads/step2.jpeg", dst2);
 
-    // threshold 2
-    Threshold_Demo(&dst2, &dst3, 0); // Call the function to initialize
-    imwrite("/Users/fangrl4ever/Downloads/step3.jpeg", dst3);
+    // Sobel
+    GaussianBlur(image, src, Size(3, 3), 0, 0, BORDER_DEFAULT);
+    cvtColor(src, src_gray, COLOR_BGR2GRAY); // Convert the image to grayscale
+    Mat grad_x, grad_y;
+    Mat abs_grad_x, abs_grad_y;
+    Sobel(src_gray, grad_x, ddepth, 1, 0, ksize, scale, delta, BORDER_DEFAULT);
+    Sobel(src_gray, grad_y, ddepth, 0, 1, ksize, scale, delta, BORDER_DEFAULT);
+
+    convertScaleAbs(grad_x, abs_grad_x); // converting back to CV_8U
+    convertScaleAbs(grad_y, abs_grad_y);
+    addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad);
+    imshow(window_name, grad);
+    imwrite("/Users/fangrl4ever/Downloads/test.jpeg", grad);
+
+    // Blur
+    grad2 = grad.clone();
+    for (int i = 1; i < 5; i = i + 2)
+    {
+        blur(grad, grad2, Size( i, i ), Point(-1,-1));
+    }
+    imwrite("/Users/fangrl4ever/Downloads/step2.jpeg", grad2);
+
+    // Threshold
+    Threshold_Demo(&grad, &grad_dest, 0); // Call the function to initialize
+    imwrite("/Users/fangrl4ever/Downloads/test2.jpeg", grad_dest);
+
     return 0;
 }
-
