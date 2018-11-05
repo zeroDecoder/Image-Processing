@@ -9,6 +9,10 @@ using namespace std;
 // vars for threshold
 int const MAX_BINARY_VALUE = 255;
 
+const int  BINARY           = 0;
+const int TO_ZERO           = 3;
+const int TO_ZERO_INVERTED  = 4;
+
 static void Threshold(Mat *the_src, Mat *the_dst, int threshold_type, int threshold_value)
 {
     threshold(*the_src, *the_dst, threshold_value, MAX_BINARY_VALUE, threshold_type);
@@ -40,33 +44,14 @@ int main( int argc, char** argv )
     resize(img_h, img_h, Size(img_h.cols/3, img_h.rows/3));
     namedWindow( window_name, CV_WINDOW_AUTOSIZE); // Create a window to display results
     resizeWindow(window_name, 800, 600);
-    createTrackbar("min value", window_name, &min_value, 300);
-    createTrackbar("max value", window_name, &max_value, 300);
+    createTrackbar("min value", window_name, &min_value, MAX_BINARY_VALUE);
+    createTrackbar("max value", window_name, &max_value, MAX_BINARY_VALUE);
     while(waitKey(50) != 'q'){
-        Threshold(&img_h, &min_h, 3, min_value); // set to 0 if less than min value
-        Threshold(&min_h, &max_h, 4, max_value); // set to 0 if greater than max value
-        Threshold(&max_h, &thresh_h, 0, min_value); // make numbers greater than min value white
+        Threshold(&img_h, &min_h, TO_ZERO, min_value); // set to 0 if less than min value
+        Threshold(&min_h, &max_h, TO_ZERO_INVERTED, max_value); // set to 0 if greater than max value
+        Threshold(&max_h, &thresh_h, BINARY, min_value); // make numbers greater than min value white
         imshow(window_name,thresh_h); // display results
-        //resizeWindow(window_name, 800, 600);
     }
-//END TRACKBAR STUFF
-
-    /*
-    Threshold(&img_h, &thresh_h, 3, 13);
-    Threshold(&thresh_h, &thresh_h2, 4, 18);
-    Threshold(&thresh_h2, &thresh_h3, 0, 13);
-    imwrite("/Users/fangrl4ever/Desktop/H2.jpeg", thresh_h3);
-
-    Threshold(&img_s, &thresh_s, 3, 160);
-    Threshold(&thresh_s, &thresh_s2, 4, 180);
-    Threshold(&thresh_s2, &thresh_s3, 0, 160);
-    imwrite("/Users/fangrl4ever/Desktop/S2.jpeg", thresh_s3);
-
-    Threshold(&img_v, &thresh_v, 3, 180);
-    Threshold(&thresh_v, &thresh_v2, 4, 250);
-    Threshold(&thresh_v2, &thresh_v3, 0, 160);
-    imwrite("/Users/fangrl4ever/Desktop/V2.jpeg", thresh_v3);
-     */
 
     return 0;
 }
