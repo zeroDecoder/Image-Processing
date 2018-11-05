@@ -2,63 +2,70 @@
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/highgui.hpp"
 #include <iostream>
+#include <unistd.h>
 using namespace cv;
 using namespace std;
 
 // vars for threshold
-int THRESHOLD_VALUE = 48;
 int const MAX_BINARY_VALUE = 255;
 
-static void Threshold_Demo(Mat *the_src, Mat *the_dst, int threshold_type)
+static void Threshold(Mat *the_src, Mat *the_dst, int threshold_type, int threshold_value)
 {
-    threshold(*the_src, *the_dst, THRESHOLD_VALUE, MAX_BINARY_VALUE, threshold_type);
+    threshold(*the_src, *the_dst, threshold_value, MAX_BINARY_VALUE, threshold_type);
 }
 
 int main( int argc, char** argv )
 {
-    Mat image, src, src_gray;
-    Mat grad, grad2, grad_dest;
-    const String window_name = "Edge Detection";
-    int ksize = 1;
-    int scale = 4;
-    int delta = 0;
-    int ddepth = CV_16S;
-    String imageName("/Users/fangrl4ever/Downloads/boxes.jpeg");
+    // variables
+    Mat img_hsv, img_rgb, img_h, img_s, img_v;
+    Mat thresh_h, min_h, max_h, thresh_h2, thresh_h3;
+    Mat thresh_s, thresh_s2, thresh_s3;
+    Mat thresh_v, thresh_v2, thresh_v3;
+    img_rgb = imread("/Users/fangrl4ever/Desktop/test.png", 1);
+    cvtColor(img_rgb, img_hsv, COLOR_BGR2HSV);
+    int min_value = 50, max_value = 50;
+    const char* window_name = "Threshold Demo";
 
-    image = imread( imageName, IMREAD_COLOR ); // Load an image
+    // save H, S, and V values into separate images
+    std::vector<Mat> channels;
+    split(img_hsv, channels);
+    img_h = channels[0];
+    img_s = channels[1];
+    img_v = channels[2];
+    imwrite("/Users/fangrl4ever/Desktop/H.jpeg", img_h);
+    imwrite("/Users/fangrl4ever/Desktop/S.jpeg", img_s);
+    imwrite("/Users/fangrl4ever/Desktop/V.jpeg", img_v);
 
-    // check for error
-    if( image.empty() )
-    {
-        printf("Error opening image: %s\n", imageName.c_str());
-        return 1;
+//TRACKBAR STUFF
+    namedWindow( window_name, WINDOW_NORMAL); // Create a window to display results
+    resizeWindow(window_name, 800, 600);
+    createTrackbar("min value", window_name, &min_value, 300);
+    createTrackbar("max value", window_name, &max_value, 300);
+    while(waitKey(50) != 'q'){
+        Threshold(&img_h, &min_h, 3, min_value); // set to 0 if less than min value
+        Threshold(&min_h, &max_h, 4, max_value); // set to 0 if greater than max value
+        Threshold(&max_h, &thresh_h, 0, min_value); // make numbers greater than min value white
+        imshow(window_name,thresh_h); // display results
+        resizeWindow(window_name, 800, 600);
     }
+//END TRACKBAR STUFF
 
-    // Sobel
-    GaussianBlur(image, src, Size(3, 3), 0, 0, BORDER_DEFAULT);
-    cvtColor(src, src_gray, COLOR_BGR2GRAY); // Convert the image to grayscale
-    Mat grad_x, grad_y;
-    Mat abs_grad_x, abs_grad_y;
-    Sobel(src_gray, grad_x, ddepth, 1, 0, ksize, scale, delta, BORDER_DEFAULT);
-    Sobel(src_gray, grad_y, ddepth, 0, 1, ksize, scale, delta, BORDER_DEFAULT);
+    /*
+    Threshold(&img_h, &thresh_h, 3, 13);
+    Threshold(&thresh_h, &thresh_h2, 4, 18);
+    Threshold(&thresh_h2, &thresh_h3, 0, 13);
+    imwrite("/Users/fangrl4ever/Desktop/H2.jpeg", thresh_h3);
 
-    convertScaleAbs(grad_x, abs_grad_x); // converting back to CV_8U
-    convertScaleAbs(grad_y, abs_grad_y);
-    addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad);
-    imshow(window_name, grad);
-    imwrite("/Users/fangrl4ever/Downloads/test.jpeg", grad);
+    Threshold(&img_s, &thresh_s, 3, 160);
+    Threshold(&thresh_s, &thresh_s2, 4, 180);
+    Threshold(&thresh_s2, &thresh_s3, 0, 160);
+    imwrite("/Users/fangrl4ever/Desktop/S2.jpeg", thresh_s3);
 
-    // Blur
-    grad2 = grad.clone();
-    for (int i = 1; i < 5; i = i + 2)
-    {
-        blur(grad, grad2, Size( i, i ), Point(-1,-1));
-    }
-    imwrite("/Users/fangrl4ever/Downloads/step2.jpeg", grad2);
-
-    // Threshold
-    Threshold_Demo(&grad, &grad_dest, 0); // Call the function to initialize
-    imwrite("/Users/fangrl4ever/Downloads/test2.jpeg", grad_dest);
+    Threshold(&img_v, &thresh_v, 3, 180);
+    Threshold(&thresh_v, &thresh_v2, 4, 250);
+    Threshold(&thresh_v2, &thresh_v3, 0, 160);
+    imwrite("/Users/fangrl4ever/Desktop/V2.jpeg", thresh_v3);
+     */
 
     return 0;
 }
