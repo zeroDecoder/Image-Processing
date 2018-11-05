@@ -43,13 +43,14 @@ int main( int argc, char** argv )
 //TRACKBAR STUFF
     resize(img_h, img_h, Size(img_h.cols/3, img_h.rows/3));
     namedWindow( window_name, CV_WINDOW_AUTOSIZE); // Create a window to display results
-    resizeWindow(window_name, 800, 600);
+
     createTrackbar("min value", window_name, &min_value, MAX_BINARY_VALUE);
     createTrackbar("max value", window_name, &max_value, MAX_BINARY_VALUE);
+
     while(waitKey(50) != 'q'){
-        Threshold(&img_h, &min_h, TO_ZERO, min_value); // set to 0 if less than min value
-        Threshold(&min_h, &max_h, TO_ZERO_INVERTED, max_value); // set to 0 if greater than max value
-        Threshold(&max_h, &thresh_h, BINARY, min_value); // make numbers greater than min value white
+        Threshold(&img_h, &min_h, min_value, MAX_BINARY_VALUE, TO_ZERO); // set to 0 if less than min value
+        Threshold(&min_h, &max_h, max_value, MAX_BINARY_VALUE, TO_ZERO_INVERTED); // set to 0 if greater than max value
+        Threshold(&max_h, &thresh_h, min_value, MAX_BINARY_VALUE, BINARY); // make numbers greater than min value white
         imshow(window_name,thresh_h); // display results
     }
 
