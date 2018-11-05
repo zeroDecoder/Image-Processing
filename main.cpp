@@ -37,7 +37,8 @@ int main( int argc, char** argv )
     imwrite("/Users/fangrl4ever/Desktop/V.jpeg", img_v);
 
 //TRACKBAR STUFF
-    namedWindow( window_name, WINDOW_NORMAL); // Create a window to display results
+    resize(img_h, img_h, Size(img_h.cols/3, img_h.rows/3));
+    namedWindow( window_name, CV_WINDOW_AUTOSIZE); // Create a window to display results
     resizeWindow(window_name, 800, 600);
     createTrackbar("min value", window_name, &min_value, 300);
     createTrackbar("max value", window_name, &max_value, 300);
@@ -46,7 +47,7 @@ int main( int argc, char** argv )
         Threshold(&min_h, &max_h, 4, max_value); // set to 0 if greater than max value
         Threshold(&max_h, &thresh_h, 0, min_value); // make numbers greater than min value white
         imshow(window_name,thresh_h); // display results
-        resizeWindow(window_name, 800, 600);
+        //resizeWindow(window_name, 800, 600);
     }
 //END TRACKBAR STUFF
 
