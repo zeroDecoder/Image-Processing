@@ -38,11 +38,10 @@ int main( int argc, char** argv )
 {
     // variables
     Mat img_hsv, img_rgb, img_h, img_s, img_v;
-    Mat thresh_h, thresh_s, thresh_v, temp_img, stacked_img;
+    Mat thresh_h, thresh_s, thresh_v, temp_img, stacked_img, edge_img;
     img_rgb = imread("/Users/fangrl4ever/Desktop/test.png", 1);
     cvtColor(img_rgb, img_hsv, COLOR_BGR2HSV);
     const char* window_name = "Threshold Demo";
-    double n1 = 0.5, n2;
 
     // save H, S, and V values into separate images
     std::vector<Mat> channels;
@@ -59,13 +58,24 @@ int main( int argc, char** argv )
     thresh_v = thresh(&img_v, window_name, "V2.jpeg");
 
     // stacking H, S, and V into one picture
-    n2 = ( 1.0 - n1 );
-    addWeighted(thresh_h, n1, thresh_s, n2, 0.0, temp_img);
-    addWeighted(temp_img, n1, thresh_v, n2, 0.0, stacked_img);
+    temp_img = thresh_h & thresh_s;
+    stacked_img = temp_img & thresh_v;
     imwrite("/Users/fangrl4ever/Desktop/stacked.jpeg", stacked_img);
-    temp_img = stacked_img;
-    threshold(temp_img, stacked_img, 250, MAX_BINARY_VALUE, BINARY);
-    imwrite("/Users/fangrl4ever/Desktop/stacked_thr.jpeg", stacked_img);
+
+    // Sobel
+    int ksize = 1;
+    int scale = 4;
+    int delta = 0;
+    int ddepth = CV_16S;
+    GaussianBlur(stacked_img, edge_img, Size(3, 3), 0, 0, BORDER_DEFAULT);
+    Mat grad_x, grad_y;
+    Mat abs_grad_x, abs_grad_y;
+    Sobel(edge_img, grad_x, ddepth, 1, 0, ksize, scale, delta, BORDER_DEFAULT);
+    Sobel(edge_img, grad_y, ddepth, 0, 1, ksize, scale, delta, BORDER_DEFAULT);
+    convertScaleAbs(grad_x, abs_grad_x); // converting back to CV_8U
+    convertScaleAbs(grad_y, abs_grad_y);
+    addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, stacked_img);
+    imwrite("/Users/fangrl4ever/Desktop/edge.jpeg", stacked_img);
 
     return 0;
 }
