@@ -38,12 +38,11 @@ int main( int argc, char** argv )
 {
     // variables
     Mat img_hsv, img_rgb, img_h, img_s, img_v;
-    Mat thresh_h;
-    Mat thresh_s;
-    Mat thresh_v;
+    Mat thresh_h, thresh_s, thresh_v, temp_img, stacked_img;
     img_rgb = imread("/Users/fangrl4ever/Desktop/test.png", 1);
     cvtColor(img_rgb, img_hsv, COLOR_BGR2HSV);
     const char* window_name = "Threshold Demo";
+    double n1 = 0.5, n2;
 
     // save H, S, and V values into separate images
     std::vector<Mat> channels;
@@ -58,6 +57,15 @@ int main( int argc, char** argv )
     thresh_h = thresh(&img_h, window_name, "H2.jpeg");
     thresh_s = thresh(&img_s, window_name, "S2.jpeg");
     thresh_v = thresh(&img_v, window_name, "V2.jpeg");
+
+    // stacking H, S, and V into one picture
+    n2 = ( 1.0 - n1 );
+    addWeighted(thresh_h, n1, thresh_s, n2, 0.0, temp_img);
+    addWeighted(temp_img, n1, thresh_v, n2, 0.0, stacked_img);
+    imwrite("/Users/fangrl4ever/Desktop/stacked.jpeg", stacked_img);
+    temp_img = stacked_img;
+    threshold(temp_img, stacked_img, 250, MAX_BINARY_VALUE, BINARY);
+    imwrite("/Users/fangrl4ever/Desktop/stacked_thr.jpeg", stacked_img);
 
     return 0;
 }
