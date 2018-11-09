@@ -14,20 +14,29 @@ const int TO_ZERO           = 3;
 const int TO_ZERO_INVERTED  = 4;
 static int h_min, h_max, s_min, s_max, v_min, v_max;
 
+struct MinMax
+{
+    int min, max;
+};
 
-std::tuple<int, int> static setMinMax(Mat *img, string window_name)
+struct HSV
+{
+    Mat h, s, v;
+};
+
+MinMax static setMinMax(Mat img, string window_name)
 {
     int min_value = 50, max_value = 50;
     Mat min, max, thr;
 
-    resize(*img, *img, Size(img->cols/3, img->rows/3));
+    resize(img, img, Size(img.cols/3, img.rows/3));
     namedWindow( window_name, CV_WINDOW_AUTOSIZE); // Create a window to display results
 
     createTrackbar("min value", window_name, &min_value, MAX_BINARY_VALUE);
     createTrackbar("max value", window_name, &max_value, MAX_BINARY_VALUE);
 
     while(waitKey(50) != 'q'){
-        threshold(*img, min, min_value, MAX_BINARY_VALUE, TO_ZERO); // set to 0 if less than min value
+        threshold(img, min, min_value, MAX_BINARY_VALUE, TO_ZERO); // set to 0 if less than min value
         threshold(min, max, max_value, MAX_BINARY_VALUE, TO_ZERO_INVERTED); // set to 0 if greater than max value
         threshold(max, thr, min_value, MAX_BINARY_VALUE, BINARY); // make numbers greater than min value white
         imshow(window_name, thr); // display results
@@ -49,7 +58,7 @@ static Mat thresh(Mat *img, int min_value, int max_value)
 }
 
 
-std::tuple<Mat, Mat, Mat>static createHSV(Mat *img)
+HSV static createHSV(Mat *img)
 {
     // variables
     Mat img_hsv, img_h, img_s, img_v;
@@ -74,10 +83,14 @@ static Mat edgeDetect(Mat *img_h, Mat *img_s, Mat *img_v)
     thresh_h = thresh(&*img_h, h_min, h_max);
     thresh_s = thresh(&*img_s, s_min, s_max);
     thresh_v = thresh(&*img_v, v_min, v_max);
+    imwrite("/Users/fangrl4ever/Desktop/thresh_h.png",thresh_h);
+    imwrite("/Users/fangrl4ever/Desktop/thresh_s.png",thresh_s);
+    imwrite("/Users/fangrl4ever/Desktop/thresh_v.png",thresh_v);
 
     // stacking H, S, and V into one picture
     temp_img = thresh_h & thresh_s;
     stacked_img = temp_img & thresh_v;
+    imwrite("/Users/fangrl4ever/Desktop/b4blur.png",stacked_img);
 
     // Sobel
     int ksize = 1;
@@ -103,12 +116,22 @@ int main( int argc, char** argv )
     img_rgb = imread("/Users/fangrl4ever/Desktop/test.png", 1);
     const char* window_name = "Threshold Demo";
 
-    auto [h, s, v] = createHSV(&img_rgb);
+    auto hsv = createHSV(&img_rgb);
+    h = hsv.h;
+    s = hsv.s;
+    v = hsv.v;
 
     // setting up min and max values
-    auto [h_min, h_max] = setMinMax(&h, window_name);
-    auto [s_min, s_max] = setMinMax(&s, window_name);
-    auto [v_min, v_max] = setMinMax(&v, window_name);
+    auto hmm = setMinMax(h, window_name);
+    auto smm = setMinMax(s, window_name);
+    auto vmm = setMinMax(v, window_name);
+
+    h_min = hmm.min;
+    h_max = hmm.max;
+    s_min = smm.min;
+    s_max = smm.max;
+    v_min = vmm.min;
+    v_max = vmm.max;
 
     imwrite("/Users/fangrl4ever/Desktop/stacked.png", edgeDetect(&h, &s, &v));
 }
