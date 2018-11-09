@@ -3,17 +3,20 @@
 #include "opencv2/highgui.hpp"
 #include <iostream>
 #include <unistd.h>
+#include <tuple>
 using namespace cv;
 using namespace std;
 
 // vars for threshold
 int const MAX_BINARY_VALUE = 255;
-
 const int BINARY            = 0;
 const int TO_ZERO           = 3;
 const int TO_ZERO_INVERTED  = 4;
+static int h_min, h_max, s_min, s_max, v_min, v_max;
 
-static Mat thresh(Mat *img, string window_name, string filename){
+
+std::tuple<int, int> static setMinMax(Mat *img, string window_name)
+{
     int min_value = 50, max_value = 50;
     Mat min, max, thr;
 
@@ -30,18 +33,28 @@ static Mat thresh(Mat *img, string window_name, string filename){
         imshow(window_name, thr); // display results
     }
 
-    imwrite("/Users/fangrl4ever/Desktop/" + filename, thr);
+    return {min_value, max_value};
+}
+
+
+static Mat thresh(Mat *img, int min_value, int max_value)
+{
+    Mat min, max, thr;
+
+    threshold(*img, min, min_value, MAX_BINARY_VALUE, TO_ZERO); // set to 0 if less than min value
+    threshold(min, max, max_value, MAX_BINARY_VALUE, TO_ZERO_INVERTED); // set to 0 if greater than max value
+    threshold(max, thr, min_value, MAX_BINARY_VALUE, BINARY); // make numbers greater than min value white
+
     return thr;
 }
 
-int main( int argc, char** argv )
+
+std::tuple<Mat, Mat, Mat>static createHSV(Mat *img)
 {
     // variables
-    Mat img_hsv, img_rgb, img_h, img_s, img_v;
-    Mat thresh_h, thresh_s, thresh_v, temp_img, stacked_img, edge_img;
-    img_rgb = imread("/Users/fangrl4ever/Desktop/test.png", 1);
-    cvtColor(img_rgb, img_hsv, COLOR_BGR2HSV);
-    const char* window_name = "Threshold Demo";
+    Mat img_hsv, img_h, img_s, img_v;
+
+    cvtColor(*img, img_hsv, COLOR_BGR2HSV);
 
     // save H, S, and V values into separate images
     std::vector<Mat> channels;
@@ -49,18 +62,22 @@ int main( int argc, char** argv )
     img_h = channels[0];
     img_s = channels[1];
     img_v = channels[2];
-    imwrite("/Users/fangrl4ever/Desktop/H.jpeg", img_h);
-    imwrite("/Users/fangrl4ever/Desktop/S.jpeg", img_s);
-    imwrite("/Users/fangrl4ever/Desktop/V.jpeg", img_v);
 
-    thresh_h = thresh(&img_h, window_name, "H2.jpeg");
-    thresh_s = thresh(&img_s, window_name, "S2.jpeg");
-    thresh_v = thresh(&img_v, window_name, "V2.jpeg");
+    return {img_h, img_s, img_v};
+}
+
+
+static Mat edgeDetect(Mat *img_h, Mat *img_s, Mat *img_v)
+{
+    Mat thresh_h, thresh_s, thresh_v, temp_img, stacked_img, edge_img;
+
+    thresh_h = thresh(&*img_h, h_min, h_max);
+    thresh_s = thresh(&*img_s, s_min, s_max);
+    thresh_v = thresh(&*img_v, v_min, v_max);
 
     // stacking H, S, and V into one picture
     temp_img = thresh_h & thresh_s;
     stacked_img = temp_img & thresh_v;
-    imwrite("/Users/fangrl4ever/Desktop/stacked.jpeg", stacked_img);
 
     // Sobel
     int ksize = 1;
@@ -75,7 +92,23 @@ int main( int argc, char** argv )
     convertScaleAbs(grad_x, abs_grad_x); // converting back to CV_8U
     convertScaleAbs(grad_y, abs_grad_y);
     addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, stacked_img);
-    imwrite("/Users/fangrl4ever/Desktop/edge.jpeg", stacked_img);
 
-    return 0;
+    return stacked_img;
+}
+
+
+int main( int argc, char** argv )
+{
+    Mat img_rgb, h, s, v;
+    img_rgb = imread("/Users/fangrl4ever/Desktop/test.png", 1);
+    const char* window_name = "Threshold Demo";
+
+    auto [h, s, v] = createHSV(&img_rgb);
+
+    // setting up min and max values
+    auto [h_min, h_max] = setMinMax(&h, window_name);
+    auto [s_min, s_max] = setMinMax(&s, window_name);
+    auto [v_min, v_max] = setMinMax(&v, window_name);
+
+    imwrite("/Users/fangrl4ever/Desktop/stacked.png", edgeDetect(&h, &s, &v));
 }
