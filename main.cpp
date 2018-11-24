@@ -10,6 +10,7 @@
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/highgui.hpp"
 #include <iostream>
+#include <fstream>
 #include <unistd.h>
 #include <tuple>
 #include "OpenFilter.hpp"
@@ -24,9 +25,7 @@ int main( int argc, char** argv )
     Filter myFilter;
 
     // configures the min and max threshold values for each h, s, v value
-
-    //myFilter.config(img_rgb);
-    myFilter.configAdapt(img_rgb);
+    myFilter.config(img_rgb);
 
     int key = 'i';
     int newKey;
@@ -57,6 +56,8 @@ int main( int argc, char** argv )
         resize(res, res, Size(res.cols/3, res.rows/3));
         imshow("testWindow", res);
     }while(newKey != 'q');
+
+    myFilter.writeHSV();
 
     destroyWindow("testWindow");
     return 0;
