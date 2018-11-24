@@ -18,16 +18,22 @@ using namespace std;
 
 int main( int argc, char** argv )
 {
-   Mat img_rgb;
+    Mat img_rgb; // image taken in from the user
     img_rgb = imread("/Users/fangrl4ever/Desktop/test.png", 1);
 
     Filter myFilter;
 
-     myFilter.config(img_rgb);
-    //setting up min and max values
+    // configures the min and max threshold values for each h, s, v value
+
+    //myFilter.config(img_rgb);
+    myFilter.configAdapt(img_rgb);
+
     int key = 'i';
     int newKey;
 
+    // view each h, s, v value by typing "h", "s", or "v" respectively
+    // view the edge detected image by typing "i"
+    // when finished setting up values, type "q" to quit
     do
     {
         newKey = waitKey(100);
@@ -50,7 +56,6 @@ int main( int argc, char** argv )
 
         resize(res, res, Size(res.cols/3, res.rows/3));
         imshow("testWindow", res);
-        
     }while(newKey != 'q');
 
     destroyWindow("testWindow");

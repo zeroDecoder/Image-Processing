@@ -26,6 +26,7 @@ public:
 
     Filter();
     void config(Mat img);
+    void configAdapt(Mat img);
     Mat edgeDetect(Mat *img);
     Mat* getH();
     Mat* getS();
@@ -34,14 +35,16 @@ public:
 private:
 
     Mat *h, *s, *v;
-    int h_min, h_max, s_min, s_max, v_min, v_max;
+    int h_min, h_max, s_min, s_max, v_min, v_max; // for regular threshold
+    int h_const, s_const, v_const; // for adaptive threshold
     const static int MAX_BINARY_VALUE = 255;
-    const static int BINARY            = 0;
-    const static int TO_ZERO           = 3;
-    const static int TO_ZERO_INVERTED  = 4;
+    const static int BINARY            = 0; // set to 255 if greater than min value
+    const static int TO_ZERO           = 3; // set to 0 if less than min value
+    const static int TO_ZERO_INVERTED  = 4; // set to 0 if greater than max value
 
     void static setMinMax(Mat img, int theMin, int theMax);
     void thresh(Mat *img, int min_value, int max_value);
+    void adaptiveThresh(Mat *img, int the_const);
     void createHSV(Mat *img);
 };
 
